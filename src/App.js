@@ -1,22 +1,27 @@
-import React from "react";
+import axios from "axios";
+import React, { useEffect } from "react";
 import { useState } from "react";
+import Data from "./Data";
 function App() {
   const [value, setvalue] = useState("");
   const [age, setAge] = useState("");
   const [domosili, setDomisili] = useState("");
   const [status, setStatus] = useState("");
   const [pekerjaan, setPekerjaan] = useState("");
-  const [data, setData] = useState([]);
-  const [edit, setEdit] = useState({});
-  const [valEdit, setValEdit] = useState("");
-  const [editUmur, setEditUmur] = useState("");
-  const [editDomisili, setEditDomisili] = useState("");
-  const [editStatus, setEditeditStatus] = useState("");
-  const [editPekerjaan, setEditeditPekerjaan] = useState("");
+  const [db, setDb] = useState();
+  const [toggle, setToggle] = useState(false);
+  const [text, setText] = useState(true);
 
+  function serverFirstTimeLoad() {
+    axios.get("http://localhost:8000/post").then((res) => {
+      setDb(res.data);
+    });
+  }
+  useEffect(() => {
+    serverFirstTimeLoad();
+  }, []);
   function handleSubmit(e) {
     e.preventDefault();
-    const x = [...data];
     const body = {
       id: 1 + Math.random(),
       name: value,
@@ -25,186 +30,92 @@ function App() {
       status: status,
       pekerjaan: pekerjaan,
     };
+
+    axios.post("http://localhost:8000/post", body).then((res) => {
+      serverFirstTimeLoad();
+    });
     if ((value, age, domosili == "")) {
       alert("Nama, Umur, dan Domisili WAJIB DIISI!!");
       return false;
     }
-
-    x.push(body);
-    setData(x);
     setvalue("");
     setAge("");
     setDomisili("");
     setStatus("");
     setPekerjaan("");
   }
-  function handleDelete(id) {
-    console.log(id);
-    const x = [...data];
-    const f = x.filter((i) => i.id !== id);
-    const w = prompt("masukan password :");
-    if (w == "aku benci WIBU") {
-      setData(f);
-      alert("Delete Berhasil");
-    } else {
-      alert("password anda salah");
+  function handleDelete(e) {
+    let x = db;
+    axios.delete("http://localhost:8000/post/" + e._id).then((res) => {
+      serverFirstTimeLoad();
+    });
+    if (x?.length == 1) {
+      setToggle(false);
+      setText(true);
     }
   }
-  function handleEdit(dat) {
-    setEdit(dat);
-  }
-  function handleBack() {
-    setEdit("");
-  }
-  function handleSave() {
-    const x = [...data];
-    x.map((item) => {
-      if (item.id == editDomisili.id) {
-        item.domisili = editDomisili.domisili;
-      }
-    });
-    x.map((item) => {
-      if (item.id == valEdit.id) {
-        item.name = valEdit.name;
-      }
-    });
-    x.map((item) => {
-      if (item.id == editUmur.id) {
-        item.umur = editUmur.umur;
-      }
-    });
-    x.map((item) => {
-      if (item.id == editStatus.id) {
-        item.status = editStatus.status;
-      }
-    });
-    x.map((item) => {
-      if (item.id == editPekerjaan.id) {
-        item.pekerjaan = editPekerjaan.pekerjaan;
-      }
-    });
 
-    setEdit("");
+  function handleUpdate(dat) {
+    const body = {
+      id: 1 + Math.random(),
+      name: dat.name,
+      umur: dat.umur,
+      domisili: dat.domisili,
+      status: dat.status,
+      pekerjaan: dat.pekerjaan,
+    };
+    axios.patch("http://localhost:8000/post/" + dat._id, body).then((res) => {
+      serverFirstTimeLoad();
+    });
+  }
+  function handleTogle() {
+    const x = prompt("masukkan password?");
+    if (x == "nurhamsah") {
+      setToggle(!toggle);
+      setText(!text);
+    }
+  }
+  function handleTogle1() {
+    setText(!text);
+    setToggle(false);
   }
   return (
-    <div className="m-5 flex justify-between ">
+    <div className="m-1 flex justify-between ">
+      <div className=" pt-[65px] w-[150px]">
+        {db?.length > 0 ? (
+          <div className=" w-[150px]">
+            {text ? (
+              <button
+                onClick={handleTogle}
+                className=" rounded-md bg-green-500 hover:bg-green-600 w-full text-white font-bold"
+              >
+                Edit Mode
+              </button>
+            ) : (
+              <button
+                onClick={handleTogle1}
+                className=" rounded-md bg-red-500 hover:bg-red-600 w-full text-white font-bold"
+              >
+                Exit Edit Mode
+              </button>
+            )}
+          </div>
+        ) : null}
+      </div>
+
       <div>
         <p className="text-center font-bold text-[40px]">DATA VAKSIN PARA MAFIA</p>
-        <div className="flex overflow-auto flex-wrap h-[500px] w-[650px] ">
-          {data.map((item) => {
-            if (item.id == edit.id) {
-              return (
-                <div className="m-3" key={item.id}>
-                  <div className="flex relative bg-teal-600 text-white p-3 rounded-md items-baseline">
-                    <div className="mt-10">
-                      <p className="mt-5 font-bold">Nama</p>
-                      <p className="mt-5 font-bold">Umur</p>
-                      <p className="mt-5 font-bold">Domisili</p>
-                      <p className="mt-5 font-bold">Status</p>
-                      <p className="mt-5 font-bold">Pekerjaan</p>
-                      <p className="mt-5 font-bold">ID CODE</p>
-                    </div>
-                    <div className="mt-10 items-stretch">
-                      <div className="flex ml-3">
-                        <input
-                          placeholder={item.name}
-                          className="text-black px-2 outline-none"
-                          onChange={(e) => setValEdit({ id: item.id, name: e.target.value })}
-                        />
-                      </div>
-                      <div className="flex mt-5 ml-3">
-                        <input
-                          placeholder={item.umur}
-                          type="number"
-                          className="text-black px-2 outline-none"
-                          onChange={(e) => setEditUmur({ id: item.id, umur: e.target.value })}
-                        />
-                      </div>
-                      <div className="flex mt-5 ml-3">
-                        <input
-                          placeholder={item.domisili}
-                          className="text-black px-2 outline-none"
-                          onChange={(e) =>
-                            setEditDomisili({ id: item.id, domisili: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="flex mt-5 ml-3">
-                        <input
-                          placeholder={item.status}
-                          className="text-black px-2 outline-none"
-                          onChange={(e) =>
-                            setEditeditStatus({ id: item.id, status: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="flex mt-5 ml-3">
-                        <input
-                          placeholder={item.pekerjaan}
-                          className="text-black px-2 outline-none"
-                          onChange={(e) =>
-                            setEditeditPekerjaan({ id: item.id, pekerjaan: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <p className="mt-5 ml-7"> : {item.id}</p>
-                    </div>
-                    <div className="absolute flex top-0 right-0 mr-3">
-                      <button
-                        onClick={() => handleSave(item)}
-                        className="ml-5 rounded-md mt-4 bg-teal-500 p-1 text-white font-light"
-                      >
-                        Save
-                      </button>
-                      <a
-                        onClick={handleBack}
-                        className="ml-5 cursor-pointer rounded-md mt-4 bg-red-500 p-1 text-white font-light"
-                      >
-                        Cancel
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <div className="m-3" key={item.id}>
-                <div className="flex relative bg-sky-600 text-white p-3 rounded-md items-center">
-                  <div className="mt-10">
-                    <p className="mt-1 font-bold">Nama</p>
-                    <p className="mt-1 font-bold">Umur</p>
-                    <p className="mt-1 font-bold">Domisili</p>
-                    <p className="mt-1 font-bold">Status</p>
-                    <p className="mt-1 font-bold">Pekerjaan</p>
-                    <p className="mt-1 font-bold">ID CODE</p>
-                  </div>
-                  <div className="mt-10">
-                    <p className="mt-1 ml-7"> : {item.name}</p>
-                    <p className="mt-1 ml-7"> : {item.umur} tahun</p>
-                    <p className="mt-1 ml-7"> : {item.domisili}</p>
-                    <p className="mt-1 ml-7"> : {item.status}</p>
-                    <p className="mt-1 ml-7"> : {item.pekerjaan}</p>
-                    <p className="mt-1 ml-7"> : {item.id}</p>
-                  </div>
-                  <div className="absolute top-0 right-0 mr-3">
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="rounded-md mt-4 bg-red-500 p-1 text-white font-light"
-                    >
-                      delete
-                    </button>
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="ml-5 rounded-md mt-4 bg-teal-500 p-1 text-white font-light"
-                    >
-                      modify
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="">
+          <Data
+            looping={db}
+            nama={handleUpdate}
+            age={handleUpdate}
+            wilayah={handleUpdate}
+            life={handleUpdate}
+            deleteItem={handleDelete}
+            work={handleUpdate}
+            editMode={toggle}
+          />
         </div>
       </div>
 
